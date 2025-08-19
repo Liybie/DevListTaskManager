@@ -357,22 +357,34 @@ function removeTask(id) {
 
 document.getElementById("confirmDelete").onclick = () => {
   if (taskToDelete !== null) {
-    const indexList = taskList.findIndex(t => t.id === taskToDelete);
-    if (indexList > -1) {
-      const task = taskList.splice(indexList, 1)[0];
+    // Find the task object in taskList
+    const taskIndex = taskList.findIndex(t => t.id === taskToDelete);
+    if (taskIndex > -1) {
+      const task = taskList[taskIndex]; // keep the exact object reference
+
+      // Update counters
       if (task.status) completed--; else inProgress--;
+
+      // Remove from taskList
+      taskList.splice(taskIndex, 1);
+
+      // Remove from data structures
+      taskStack.list.remove(task);
+      taskQueue.list.remove(task);
+      pq.list.remove(task);
+
+      // Remove from Completed Modal if present
+      const completedRows = document.querySelectorAll("#completedModalBody tr");
+      completedRows.forEach(row => {
+        if (row.innerHTML.includes(`removeTask(${taskToDelete})`)) row.remove();
+      });
+
+      // Update UI
       renderTasks();
       updateStats();
     }
 
-    taskStack.list.remove(task);
-    taskQueue.list.remove(task);
-    pq.list.remove(task);
-
-    document.querySelectorAll("#completedModalBody tr").forEach(row => {
-      if (row.innerHTML.includes(`removeTask(${taskToDelete})`)) row.remove();
-    });
-
+    // Reset modal
     taskToDelete = null;
     document.getElementById("deleteModal").style.display = "none";
   }
@@ -383,10 +395,11 @@ document.getElementById("cancelDelete").onclick = () => {
   document.getElementById("deleteModal").style.display = "none";
 };
 
-window.onclick = (e) => {
+// Ensure modal click outside closes correctly
+window.addEventListener("click", (e) => {
   const deleteModal = document.getElementById("deleteModal");
   if (e.target === deleteModal) {
     deleteModal.style.display = "none";
     taskToDelete = null;
   }
-};
+});

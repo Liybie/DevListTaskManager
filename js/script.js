@@ -65,6 +65,15 @@ class LinkedList {
     return false;
   }
 
+  findById(id) {
+    let current = this.head;
+    while (current) {
+      if (current.data.id === id) return current.data;
+      current = current.next;
+    }
+    return null;
+  }
+
   toArray() {
     const arr = [];
     let current = this.head;
@@ -144,13 +153,13 @@ class PriorityQueue {
 let taskStack = new TaskStack();
 let taskQueue = new TaskQueue();
 let pq = new PriorityQueue();
-let taskList = []; // used for rendering
 let sortByDateAsc = true;
 
 // ------------------- Core Functions -------------------
 function updateStats() {
+  const allTasks = taskStack.toArray();
   document.getElementById("stats").textContent =
-    `Tasks: ${taskList.filter(t => !t.status).length} | Completed: ${completed} | In Progress: ${inProgress}`;
+    `Tasks: ${allTasks.filter(t => !t.status).length} | Completed: ${completed} | In Progress: ${inProgress}`;
 }
 
 function addTask(name, desc, due, priority) {
@@ -167,7 +176,6 @@ function addTask(name, desc, due, priority) {
   taskStack.push(task);
   taskQueue.enqueue(task);
   pq.enqueue(task);
-  taskList.push(task);
 
   inProgress++;
   renderTasks();
@@ -178,13 +186,12 @@ function renderTasks(tasks = null) {
   const tbody = document.querySelector("#taskTable tbody");
   tbody.innerHTML = "";
 
-  // Stack is LIFO, newest task is already at the front
-  let tasksToRender = tasks || [...taskStack.toArray()].filter(t => !t.status);
+  let tasksToRender = tasks || taskStack.toArray().filter(t => !t.status);
 
   tasksToRender.forEach(t => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td><input type="checkbox" onchange="moveToCompleted(this, ${taskList.indexOf(t)})"></td>
+      <td><input type="checkbox" onchange="moveToCompleted(this, ${t.id})"></td>
       <td>${t.name}</td>
       <td>${t.desc}</td>
       <td>${t.due}</td>
@@ -202,9 +209,11 @@ function renderTasks(tasks = null) {
 }
 
 // ------------------- Task Completion -------------------
-function moveToCompleted(checkbox, index) {
+function moveToCompleted(checkbox, id) {
   if (checkbox.checked) {
-    const task = taskList[index];
+    const task = taskStack.list.findById(id);
+    if (!task) return;
+
     task.status = true;
     completed++;
     inProgress--;
@@ -229,11 +238,11 @@ function moveToCompleted(checkbox, index) {
 
 // ------------------- Sorting -------------------
 function sortByStack() {
-  renderTasks([...taskStack.toArray()].filter(t => !t.status));
+  renderTasks(taskStack.toArray().filter(t => !t.status));
 }
 
 function sortByPriority() {
-  const sorted = [...taskStack.toArray()]
+  const sorted = taskStack.toArray()
     .filter(t => !t.status)
     .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   renderTasks(sorted);
@@ -241,7 +250,7 @@ function sortByPriority() {
 }
 
 function sortByDateAdded() {
-  const sorted = [...taskStack.toArray()]
+  const sorted = taskStack.toArray()
     .filter(t => !t.status)
     .sort((a, b) => sortByDateAsc
       ? new Date(a.added) - new Date(b.added)
@@ -258,12 +267,12 @@ function undoTask() {
 
 function processNextTask() {
   const task = taskQueue.dequeue();
-  if (task) moveToCompleted({ checked: true }, taskList.indexOf(task));
+  if (task) moveToCompleted({ checked: true }, task.id);
 }
 
 function processUrgentTask() {
   const urgent = pq.dequeue();
-  if (urgent) moveToCompleted({ checked: true }, taskList.indexOf(urgent));
+  if (urgent) moveToCompleted({ checked: true }, urgent.id);
 }
 
 // ------------------- Modal & Form -------------------
@@ -298,7 +307,7 @@ function toggleCompleted() {
   const completedModalBody = document.getElementById("completedModalBody");
 
   completedModalBody.innerHTML = "";
-  taskList.filter(t => t.status).reverse().forEach(t => {
+  taskStack.toArray().filter(t => t.status).reverse().forEach(t => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${t.name}</td>
@@ -357,18 +366,11 @@ function removeTask(id) {
 
 document.getElementById("confirmDelete").onclick = () => {
   if (taskToDelete !== null) {
-    // Find the task object in taskList
-    const taskIndex = taskList.findIndex(t => t.id === taskToDelete);
-    if (taskIndex > -1) {
-      const task = taskList[taskIndex]; // keep the exact object reference
-
-      // Update counters
+    const task = taskStack.list.findById(taskToDelete);
+    if (task) {
       if (task.status) completed--; else inProgress--;
 
-      // Remove from taskList
-      taskList.splice(taskIndex, 1);
-
-      // Remove from data structures
+      // Remove from all structures
       taskStack.list.remove(task);
       taskQueue.list.remove(task);
       pq.list.remove(task);
@@ -379,12 +381,10 @@ document.getElementById("confirmDelete").onclick = () => {
         if (row.innerHTML.includes(`removeTask(${taskToDelete})`)) row.remove();
       });
 
-      // Update UI
       renderTasks();
       updateStats();
     }
 
-    // Reset modal
     taskToDelete = null;
     document.getElementById("deleteModal").style.display = "none";
   }
@@ -395,7 +395,6 @@ document.getElementById("cancelDelete").onclick = () => {
   document.getElementById("deleteModal").style.display = "none";
 };
 
-// Ensure modal click outside closes correctly
 window.addEventListener("click", (e) => {
   const deleteModal = document.getElementById("deleteModal");
   if (e.target === deleteModal) {

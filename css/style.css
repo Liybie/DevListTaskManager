@@ -173,7 +173,7 @@ thead, tbody tr { display: table; width: 100%; table-layout: fixed; }
 .dot-loader span {
   width: 20px;
   height: 20px;
-  background-color: #4CAF50;
+  background-color: #feeaa1;
   border-radius: 50%;
   display: inline-block;
   animation: grow 0.8s forwards;
@@ -246,5 +246,3 @@ thead, tbody tr { display: table; width: 100%; table-layout: fixed; }
   font-weight: 500;
 }
 .btn-secondary:hover { background: #95a5a6; }
-
-

@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <title>DevList (Web)</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -17,6 +20,7 @@
 </div>
 
 <!-- Add Task Modal -->
+ <div class="bodyContainer">
 <div id="taskModal" class="modal">
   <div class="modal-content" style="width: 700px;">
     <span class="close">&times;</span>
@@ -82,13 +86,15 @@
 
 <!-- Top Panel -->
 <div class="top-panel">
-  <div>
+  <div class="titleDiv">
     <h1>DevList</h1>
-    <div id="stats" class="stats"></div>
   </div>
-  <div>
+  <div class="statsnButtons">
+    <div id="stats" class="stats"></div>
+    <div class="buttonsDiv">
     <button onclick="openTaskDialog()">+ New</button>
     <button onclick="toggleCompleted()">Completed</button>
+    </div>
   </div>
 </div>
 
@@ -107,6 +113,7 @@
   </thead>
   <tbody></tbody>
 </table>
+ </div>
 
 <!-- No Tasks Message -->
 <div id="noTasksMessage">No tasks to accomplish 🎉</div>

@@ -236,9 +236,14 @@ function moveToCompleted(checkbox, id) {
 function sortByPriority() {
   const sorted = [];
   taskStack.forEach(t => { if (!t.status) sorted.push(t); });
-  sorted.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  sorted.sort((a, b) => {
+    const prioDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+    if (prioDiff !== 0) return prioDiff;      // Compare by priority first
+    return new Date(a.due) - new Date(b.due); // If same priority, compare due date
+  });
   renderTasks(sorted);
 }
+
 // Toggle sorting by date added (ascending/descending) cannot be demonstrated unless mag wait until next day
 function sortByDateAdded() {
   const sorted = [];
@@ -376,3 +381,4 @@ window.addEventListener("click", (e) => {
     taskToDelete = null;
   }
 });
+
